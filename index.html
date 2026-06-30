@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Stacktrack">
+<title>Stacktrack</title>
+<style>
+:root {
+  --bg:#0a0a0c; --surface:#131318; --card:#1a1a22; --border:#33333f;
+  --gold:#d4b15c; --gold-dim:#8a6f30; --silver:#aec4d2; --platinum:#cdd3da;
+  --palladium:#bd9bcd; --green:#5ec496; --red:#f06868;
+  --text:#f2f2f5; --muted:#9494a6;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{-webkit-text-size-adjust:100%;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;}
+header{position:sticky;top:0;z-index:100;background:rgba(10,10,12,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:.6rem 1rem;}
+.header-row{display:flex;align-items:center;justify-content:space-between;}
+.logo{font-size:.9rem;letter-spacing:.2em;font-weight:700;color:var(--gold);}
+.ticker{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);background:var(--surface);}
+.ticker::-webkit-scrollbar{display:none;}
+.tick-item{flex:0 0 auto;padding:.45rem .9rem;border-right:1px solid var(--border);min-width:90px;}
+.tick-metal{font-size:.6rem;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;}
+.tick-price{font-size:.95rem;font-weight:600;}
+.tick-price.gold{color:var(--gold);}
+.tick-price.silver{color:var(--silver);}
+.tick-price.platinum{color:var(--platinum);}
+.tick-price.palladium{color:var(--palladium);}
+.tick-change{font-size:.65rem;}
+.tick-change.up{color:var(--green);}
+.tick-change.dn{color:var(--red);}
+.tick-ratio{flex:0 0 auto;padding:.45rem .9rem;}
+.ratio-val{font-size:.95rem;color:var(--platinum);font-weight:600;}
+.price-age{font-size:.58rem;color:var(--muted);text-align:right;padding:.2rem .9rem;background:var(--surface);}
+.nav-tabs{display:flex;overflow-x:auto;scrollbar-width:none;background:var(--surface);border-bottom:1px solid var(--border);}
+.nav-tabs::-webkit-scrollbar{display:none;}
+.tab-btn{flex:0 0 auto;padding:.85rem 1.1rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap;touch-action:manipulation;min-height:46px;}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
+main{padding:.75rem;max-width:600px;margin:0 auto;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.85rem;margin-bottom:.7rem;}
+.card-title{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem;}
+.hero-stat{background:linear-gradient(135deg,rgba(212,177,92,.12),rgba(212,177,92,.03));border:1px solid var(--gold-dim);border-radius:12px;padding:1.1rem 1rem;margin-bottom:.7rem;}
+.hero-stat-label{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);opacity:.85;font-weight:600;}
+.hero-stat-val{font-size:2.4rem;font-weight:700;color:var(--gold);margin-top:.25rem;letter-spacing:-.02em;line-height:1.1;}
+.pf-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.7rem;}
+.pf-cell{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.65rem .5rem;}
+.pf-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.pf-val{font-size:1.2rem;font-weight:700;margin-top:.15rem;letter-spacing:-.01em;}
+.section-title{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:.9rem 0 .4rem;}
+.holding-item{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--border);border-radius:8px;padding:.75rem;margin-bottom:.5rem;display:grid;grid-template-columns:1fr auto;gap:.3rem;}
+.holding-item.gain{border-left-color:var(--green);}
+.holding-item.loss{border-left-color:var(--red);}
+.h-name{font-size:.85rem;font-weight:600;}
+.h-detail{font-size:.65rem;color:var(--muted);margin-top:.1rem;}
+.h-right{text-align:right;}
+.h-melt{font-size:1.05rem;font-weight:700;color:var(--gold);}
+.h-pl{font-size:.75rem;font-weight:600;}
+.h-pl.up{color:var(--green);}
+.h-pl.dn{color:var(--red);}
+.metal-badge{font-size:.62rem;font-weight:700;padding:.12rem .35rem;border-radius:3px;}
+.badge-au{background:rgba(201,168,76,.18);color:var(--gold);}
+.badge-ag{background:rgba(157,184,200,.15);color:var(--silver);}
+.badge-pt{background:rgba(194,200,208,.12);color:var(--platinum);}
+.badge-pd{background:rgba(176,140,192,.15);color:var(--palladium);}
+.form-group{margin-bottom:.7rem;}
+.form-label{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem;display:block;}
+.form-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:1rem;padding:.75rem .85rem;outline:none;min-height:46px;}
+.form-input:focus{border-color:var(--gold);}
+.form-select{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:1rem;padding:.75rem .85rem;outline:none;appearance:none;min-height:46px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+.btn{width:100%;padding:.95rem;border-radius:10px;border:none;font-size:.9rem;cursor:pointer;font-weight:600;touch-action:manipulation;min-height:46px;}
+.btn-gold{background:var(--gold);color:#0a0a0c;}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+.btn-sm{padding:.55rem .9rem;border-radius:7px;border:none;font-size:.74rem;cursor:pointer;font-weight:600;touch-action:manipulation;min-height:38px;}
+.btn-sm-gold{background:var(--gold);color:#0a0a0c;}
+.btn-sm-outline{background:transparent;border:1px solid var(--border);color:var(--text);}
+.flip-item{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.75rem;margin-bottom:.5rem;}
+.flip-header{display:flex;justify-content:space-between;align-items:flex-start;}
+.flip-name{font-size:.85rem;font-weight:600;}
+.flip-status{font-size:.65rem;font-weight:700;letter-spacing:.08em;padding:.15rem .4rem;border-radius:4px;}
+.flip-status.open{background:rgba(201,168,76,.15);color:var(--gold);}
+.flip-status.closed{background:rgba(76,175,130,.12);color:var(--green);}
+.flip-status.loss{background:rgba(224,85,85,.12);color:var(--red);}
+.flip-nums{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.3rem;margin-top:.5rem;}
+.flip-num-label{font-size:.58rem;color:var(--muted);text-transform:uppercase;}
+.flip-num-val{font-size:.82rem;font-weight:600;margin-top:.1rem;}
+.upload-zone{border:2px dashed var(--border);border-radius:10px;padding:2rem;text-align:center;cursor:pointer;margin-bottom:.7rem;background:var(--surface);}
+/* ── SCAN RESULT: full markdown rendering ── */
+.scan-result{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.8rem;font-size:.8rem;line-height:1.6;color:var(--text);}
+.scan-result h1,.scan-result h2{font-size:.78rem;font-weight:700;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;margin:.8rem 0 .25rem;border-bottom:1px solid var(--border);padding-bottom:.2rem;}
+.scan-result h2:first-child{margin-top:0;}
+.scan-result h3{font-size:.76rem;font-weight:700;color:var(--silver);margin:.5rem 0 .15rem;}
+.scan-result strong{color:var(--text);font-weight:700;}
+.scan-result em{color:var(--muted);font-style:italic;}
+.scan-result p{margin:.18rem 0;}
+.scan-result table{width:100%;border-collapse:collapse;margin:.5rem 0;font-size:.74rem;}
+.scan-result th{background:rgba(37,37,47,.9);color:var(--gold);padding:.28rem .45rem;text-align:left;font-size:.67rem;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);}
+.scan-result td{padding:.24rem .45rem;border-bottom:1px solid rgba(37,37,47,.6);}
+.scan-result tr:last-child td{border-bottom:none;}
+.scan-result tr:nth-child(even) td{background:rgba(255,255,255,.02);}
+.scan-result hr{border:none;border-top:1px solid var(--border);margin:.6rem 0;}
+.scan-result ul{padding-left:1.1rem;margin:.25rem 0;}
+.scan-result li{margin-bottom:.18rem;}
+/* ── END SCAN RESULT ── */
+.signal-score{display:flex;align-items:center;gap:1rem;margin-bottom:.8rem;}
+.score-ring-wrap{position:relative;width:70px;height:70px;flex-shrink:0;}
+.score-ring-wrap svg{transform:rotate(-90deg);}
+.score-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;}
+.score-verdict{font-size:.8rem;margin-top:.2rem;font-weight:700;letter-spacing:.05em;}
+.score-verdict.strong{color:var(--green);}
+.score-verdict.mod{color:var(--gold);}
+.signal-item{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:.55rem .7rem;margin-bottom:.4rem;}
+.signal-top{display:flex;justify-content:space-between;align-items:center;}
+.signal-name{font-size:.75rem;font-weight:600;}
+.signal-bar-wrap{height:4px;background:var(--border);border-radius:2px;margin-top:.3rem;}
+.signal-bar{height:4px;border-radius:2px;background:var(--gold);}
+.signal-note{font-size:.62rem;color:var(--muted);margin-top:.3rem;}
+.conv-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.95rem;padding:.5rem .7rem;outline:none;}
+.conv-row{display:flex;gap:.5rem;align-items:center;margin-bottom:.5rem;}
+.conv-label{font-size:.65rem;color:var(--muted);min-width:50px;}
+.setting-row{display:flex;justify-content:space-between;align-items:center;padding:.65rem 0;border-bottom:1px solid var(--border);font-size:.85rem;}
+.setting-row:last-child{border-bottom:none;}
+.setting-sub{font-size:.68rem;color:var(--muted);}
+.empty-state{text-align:center;color:var(--muted);font-size:.8rem;padding:2rem 0;}
+.toast{position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);color:var(--text);padding:.5rem 1.1rem;border-radius:8px;font-size:.8rem;z-index:9990;opacity:0;transition:opacity .2s;pointer-events:none;}
+.toast.show{opacity:1;}
+.save-bar{display:flex;gap:.5rem;margin-bottom:.7rem;}
+.save-btn{flex:1;border-radius:8px;padding:.55rem;text-align:center;font-size:.75rem;font-weight:700;letter-spacing:.06em;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;}
+/* COLLECTION */
+.col-sort-bar{display:flex;gap:.4rem;overflow-x:auto;scrollbar-width:none;margin-bottom:.7rem;padding-bottom:.1rem;}
+.col-sort-bar::-webkit-scrollbar{display:none;}
+.sort-chip{flex:0 0 auto;padding:.5rem .85rem;border-radius:20px;font-size:.68rem;font-weight:700;letter-spacing:.06em;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;touch-action:manipulation;min-height:38px;display:flex;align-items:center;}
+.sort-chip.active{background:var(--gold);color:#0a0a0c;border-color:var(--gold);}
+.col-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+.col-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;position:relative;}
+.col-card-img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:2rem;}
+.col-card-img img{width:100%;height:100%;object-fit:cover;}
+.col-card-body{padding:.5rem;}
+.col-card-name{font-size:.75rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.col-card-grade{font-size:.68rem;color:var(--gold);margin-top:.1rem;}
+.col-card-val{font-size:.65rem;color:var(--muted);margin-top:.1rem;}
+/* COIN DETAIL MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;overflow-y:auto;}
+.modal-overlay.hidden{display:none;}
+.modal-box{background:var(--card);border-radius:16px 16px 0 0;padding:1rem;position:absolute;bottom:0;left:0;right:0;max-height:92vh;overflow-y:auto;}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto .8rem;}
+.coin-photos{display:flex;gap:.5rem;margin-bottom:.7rem;}
+.coin-photo-slot{flex:1;aspect-ratio:1;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.5rem;position:relative;}
+.coin-photo-slot img{width:100%;height:100%;object-fit:cover;}
+.coin-photo-label{position:absolute;bottom:0;left:0;right:0;text-align:center;font-size:.55rem;color:var(--muted);background:rgba(0,0,0,.5);padding:.15rem;}
+.attr-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.7rem;}
+.attr-field{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:.5rem .6rem;}
+.attr-label{font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+.attr-val{font-size:.82rem;font-weight:600;margin-top:.15rem;}
+.grade-badge{display:inline-block;padding:.2rem .5rem;border-radius:5px;font-size:.75rem;font-weight:700;}
+.grade-ms{background:rgba(76,175,130,.15);color:var(--green);}
+.grade-au{background:rgba(201,168,76,.15);color:var(--gold);}
+.grade-ef{background:rgba(157,184,200,.15);color:var(--silver);}
+.grade-vf{background:rgba(157,184,200,.1);color:var(--silver);}
+.grade-f{background:rgba(80,80,96,.3);color:var(--text);}
+.grade-poor{background:rgba(224,85,85,.1);color:var(--red);}
+.ai-val-box{background:var(--surface);border:1px solid var(--gold-dim);border-radius:8px;padding:.7rem;margin-bottom:.7rem;}
+.ai-val-title{font-size:.6rem;color:var(--gold);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.4rem;}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:.3rem;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <div class="header-row">
+    <div class="logo">⬡ STACKTRACK</div>
+    <div id="price-status" style="font-size:.7rem;color:var(--muted)">●</div>
+  </div>
+</header>
+
+<div class="ticker">
+  <div class="tick-item"><div class="tick-metal">GOLD</div><div class="tick-price gold" id="t-au">$3,280.00</div><div class="tick-change" id="tc-au">—</div></div>
+  <div class="tick-item"><div class="tick-metal">SILVER</div><div class="tick-price silver" id="t-ag">$32.80</div><div class="tick-change" id="tc-ag">—</div></div>
+  <div class="tick-item"><div class="tick-metal">PLATINUM</div><div class="tick-price platinum" id="t-pt">$1,020.00</div><div class="tick-change" id="tc-pt">—</div></div>
+  <div class="tick-item"><div class="tick-metal">PALLADIUM</div><div class="tick-price palladium" id="t-pd">$980.00</div><div class="tick-change" id="tc-pd">—</div></div>
+  <div class="tick-ratio"><div class="tick-metal">Au:Ag</div><div class="ratio-val" id="t-ratio">100.0:1</div></div>
+</div>
+<div class="price-age" id="price-age">Loading live prices…</div>
+
+<div class="nav-tabs">
+  <button class="tab-btn" onclick="showTab('scanner',this)">Scan</button>
+  <button class="tab-btn active" onclick="showTab('portfolio',this)">Holdings</button>
+  <button class="tab-btn" onclick="showTab('flips',this)">Sell</button>
+  <button class="tab-btn" onclick="showTab('tools',this)">Tools</button>
+</div>
+
+<main>
+
+<!-- HOLDINGS (merged Portfolio + Collection) -->
+<div class="tab-panel active" id="tab-portfolio">
+  <div style="display:flex;gap:.4rem;margin-bottom:.7rem">
+    <div class="sort-chip active" id="hv-summary-btn" onclick="setHoldingsView('summary')" style="flex:1;text-align:center;padding:.4rem">Summary</div>
+    <div class="sort-chip" id="hv-registry-btn" onclick="setHoldingsView('registry')" style="flex:1;text-align:center;padding:.4rem">Registry</div>
+  </div>
+
+  <!-- SUMMARY VIEW: melt/cost/P&L -->
+  <div id="holdings-summary-view">
+    <div class="save-bar">
+      <div class="save-btn" onclick="saveStack()" style="background:var(--gold);color:#0a0a0c;">💾 SAVE STACK</div>
+      <div class="save-btn" onclick="document.getElementById('load-file').click()" style="background:var(--card);border:1px solid var(--border);">📂 LOAD STACK</div>
+      <input type="file" id="load-file" accept=".json" style="display:none" onchange="loadStack(event)">
+    </div>
+    <div id="save-msg" style="font-size:.68rem;color:var(--green);text-align:center;min-height:1rem;margin-bottom:.4rem"></div>
+    <div class="hero-stat">
+      <div class="hero-stat-label">Total Melt Value</div>
+      <div class="hero-stat-val" id="pf-melt">$—</div>
+    </div>
+    <div class="pf-grid">
+      <div class="pf-cell"><div class="pf-label">Cost Basis</div><div class="pf-val" id="pf-cost">$—</div></div>
+      <div class="pf-cell"><div class="pf-label">P&L</div><div class="pf-val" id="pf-pl">$—</div></div>
+      <div class="pf-cell"><div class="pf-label">P&L %</div><div class="pf-val" id="pf-plpct">—%</div></div>
+    </div>
+    <div class="card" id="breakdown-card" style="display:none"><div class="card-title">Metal Breakdown</div><div id="breakdown-list"></div></div>
+    <div class="section-title">Holdings</div>
+    <div id="holdings-list"></div>
+  </div>
+
+  <!-- REGISTRY VIEW: photo grid / numismatic detail -->
+  <div id="holdings-registry-view" style="display:none">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:.6rem">
+      <div onclick="openCoinModal(null)" style="background:var(--gold);color:#0a0a0c;border-radius:7px;padding:.3rem .8rem;font-size:.72rem;font-weight:700;cursor:pointer;touch-action:manipulation">+ ADD COIN</div>
+    </div>
+    <div class="col-sort-bar" id="col-sort-bar">
+      <div class="sort-chip active" onclick="setSort('date',this)">Recent</div>
+      <div class="sort-chip" onclick="setSort('metal',this)">Metal</div>
+      <div class="sort-chip" onclick="setSort('grade',this)">Grade ↓</div>
+      <div class="sort-chip" onclick="setSort('value',this)">Value ↓</div>
+      <div class="sort-chip" onclick="setSort('date_asc',this)">Oldest</div>
+      <div class="sort-chip" onclick="filterMetal('ag',this)">Silver</div>
+      <div class="sort-chip" onclick="filterMetal('au',this)">Gold</div>
+      <div class="sort-chip" onclick="filterMetal('all',this)">All Metals</div>
+    </div>
+    <div class="col-grid" id="col-grid"></div>
+    <div id="col-empty" class="empty-state" style="display:none"><div style="font-size:2rem">🪙</div>No coins yet.<br>Tap <b>+ Add Coin</b> to start.</div>
+  </div>
+</div>
+
+<!-- TOOLS (merged Add + Convert + Settings) -->
+<div class="tab-panel" id="tab-tools">
+  <div style="display:flex;gap:.4rem;margin-bottom:.7rem;overflow-x:auto">
+    <div class="sort-chip active" id="tv-add-btn" onclick="setToolsView('add')" style="white-space:nowrap">+ Add Manually</div>
+    <div class="sort-chip" id="tv-convert-btn" onclick="setToolsView('convert')" style="white-space:nowrap">Calculators</div>
+    <div class="sort-chip" id="tv-settings-btn" onclick="setToolsView('settings')" style="white-space:nowrap">Settings</div>
+  </div>
+
+  <div id="tools-add-view">
+  <div class="card">
+    <div class="card-title">Add to Stack</div>
+    <div class="form-group"><label class="form-label">Metal</label>
+      <select class="form-select" id="add-metal" onchange="updateCoinOpts()">
+        <option value="ag">Silver (Ag)</option><option value="au">Gold (Au)</option>
+        <option value="pt">Platinum (Pt)</option><option value="pd">Palladium (Pd)</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Type</label>
+      <select class="form-select" id="add-type" onchange="fillDefaults()">
+        <option value="">Custom</option>
+        <option value="morgan">Morgan Dollar (.7734 ozt .900)</option>
+        <option value="peace">Peace Dollar (.7734 ozt .900)</option>
+        <option value="walker">Walking Liberty Half (.3617 ozt .900)</option>
+        <option value="franklin">Franklin Half (.3617 ozt .900)</option>
+        <option value="kennedy40">Kennedy Half 1965-70 (.1479 ozt .400)</option>
+        <option value="merc">Mercury Dime (.0723 ozt .900)</option>
+        <option value="quarter">Washington Quarter pre-65 (.1808 ozt .900)</option>
+        <option value="ase">American Silver Eagle (1.000 ozt .999)</option>
+        <option value="maple_ag">Canadian Maple Leaf Ag (1.000 ozt .9999)</option>
+        <option value="round">Generic .999 Round (1.000 ozt .999)</option>
+        <option value="age1">Gold Eagle 1oz (.9167)</option>
+        <option value="age12">Gold Eagle 1/2oz (.9167)</option>
+        <option value="age14">Gold Eagle 1/4oz (.9167)</option>
+        <option value="age110">Gold Eagle 1/10oz (.9167)</option>
+        <option value="agb">Gold Buffalo 1oz (.9999)</option>
+        <option value="kruger">Krugerrand 1oz (.9167)</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="add-name" type="text" placeholder="e.g. 1921-D Morgan"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Troy Oz</label><input class="form-input" id="add-ozt" type="number" step="0.0001" placeholder="0.7734"></div>
+      <div class="form-group"><label class="form-label">Purity</label><input class="form-input" id="add-purity" type="number" step="0.001" placeholder="0.999"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Qty</label><input class="form-input" id="add-qty" type="number" value="1" min="1"></div>
+      <div class="form-group"><label class="form-label">Cost Each ($)</label><input class="form-input" id="add-cost" type="number" step="0.01"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="add-date" type="date"></div>
+    <div class="form-group"><label class="form-label">Notes</label><input class="form-input" id="add-notes" type="text" placeholder="Grade, toning, etc."></div>
+    <button class="btn btn-gold" onclick="addHolding()">Add to Stack</button>
+  </div>
+  <div class="card">
+    <div class="card-title">Quick Melt</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Weight (g)</label><input class="form-input" id="qm-g" type="number" step="0.01" oninput="quickMelt()"></div>
+      <div class="form-group"><label class="form-label">Purity</label><input class="form-input" id="qm-p" type="number" step="0.001" value="0.999" oninput="quickMelt()"></div>
+    </div>
+    <select class="form-select" id="qm-metal" onchange="quickMelt()" style="margin-bottom:.5rem">
+      <option value="ag">Silver</option><option value="au">Gold</option><option value="pt">Platinum</option><option value="pd">Palladium</option>
+    </select>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:.6rem .8rem">Melt: <span id="qm-result" style="color:var(--gold);font-weight:600">—</span></div>
+  </div>
+  </div>
+<!-- (CONVERT now embedded inside Tools below) -->
+<div id="tools-convert-view" style="display:none">
+  <div class="card">
+    <div class="card-title">Weight Converter</div>
+    <div class="conv-row"><input class="conv-input" id="cv-g" type="number" step="0.001" placeholder="grams" oninput="cvG()"><span class="conv-label">g</span></div>
+    <div class="conv-row"><input class="conv-input" id="cv-ozt" type="number" step="0.0001" placeholder="troy oz" oninput="cvOzt()"><span class="conv-label">ozt</span></div>
+    <div class="conv-row"><input class="conv-input" id="cv-dwt" type="number" step="0.01" placeholder="dwt" oninput="cvDwt()"><span class="conv-label">dwt</span></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Spot Melt Calculator</div>
+    <select class="form-select" id="sm-metal" onchange="spotMelt()" style="margin-bottom:.5rem"><option value="ag">Silver</option><option value="au">Gold</option><option value="pt">Platinum</option><option value="pd">Palladium</option></select>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Weight (ozt)</label><input class="form-input" id="sm-ozt" type="number" step="0.0001" oninput="spotMelt()"></div>
+      <div class="form-group"><label class="form-label">Purity</label><input class="form-input" id="sm-purity" type="number" step="0.001" value="0.999" oninput="spotMelt()"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Qty</label><input class="form-input" id="sm-qty" type="number" value="1" oninput="spotMelt()"></div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:.7rem .8rem">
+      <div style="font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em">Melt Value</div>
+      <div style="font-size:1.4rem;font-weight:600;color:var(--gold)" id="sm-result">$—</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Junk Silver → Melt</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Face Value ($)</label><input class="form-input" id="junk-face" type="number" step="0.01" oninput="junkCalc()"></div>
+      <div class="form-group"><label class="form-label">Type</label>
+        <select class="form-select" id="junk-type" onchange="junkCalc()">
+          <option value="0.715">Dimes/Quarters/Halves pre-65</option>
+          <option value="0.3575">Kennedy Half 1965-70</option>
+          <option value="0.77344">Dollars (Morgan/Peace)</option>
+        </select>
+      </div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:.6rem .8rem;font-size:.85rem;color:var(--silver)" id="junk-result">—</div>
+  </div>
+</div>
+
+<!-- (SETTINGS now embedded inside Tools below) -->
+<div id="tools-settings-view" style="display:none">
+  <div class="card">
+    <div class="card-title">Data</div>
+    <div class="setting-row"><div><div>Export Holdings (JSON)</div><div class="setting-sub">Backup your stack</div></div><button class="btn-sm btn-sm-outline" onclick="exportData()">Export</button></div>
+    <div class="setting-row"><div><div>Import Holdings (JSON)</div><div class="setting-sub">Restore from backup</div></div><button class="btn-sm btn-sm-outline" onclick="document.getElementById('import-file').click()">Import</button><input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)"></div>
+    <div class="setting-row"><div><div style="color:var(--red)">Clear All Data</div><div class="setting-sub">Wipes everything</div></div><button class="btn-sm btn-sm-outline" style="color:var(--red);border-color:var(--red)" onclick="clearAll()">Clear</button></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Manual Spot Override</div>
+    <div style="font-size:.65rem;color:var(--muted);margin-bottom:.5rem">Use if live prices fail to load. Tap the price bar at top to retry live fetch.</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Gold ($/ozt)</label><input class="form-input" id="set-au" type="number" step="0.01" placeholder="4020.00"></div>
+      <div class="form-group"><label class="form-label">Silver ($/ozt)</label><input class="form-input" id="set-ag" type="number" step="0.01" placeholder="58.70"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Platinum ($/ozt)</label><input class="form-input" id="set-pt" type="number" step="0.01" placeholder="1050.00"></div>
+      <div class="form-group"><label class="form-label">Palladium ($/ozt)</label><input class="form-input" id="set-pd" type="number" step="0.01" placeholder="980.00"></div>
+    </div>
+    <button class="btn btn-gold" onclick="applyManualPrices()" style="font-size:.8rem;padding:.55rem">Apply Prices</button>
+  </div>
+  <div class="card" style="font-size:.7rem;color:var(--muted);line-height:1.6">
+    <div class="card-title">About</div>
+    STACKTRACK v2.1 · Scan, add, track, sell · Single-file HTML · Data stored in your browser · Not financial advice.
+  </div>
+</div>
+</div>
+  <!-- END TOOLS -->
+
+<!-- FLIPS -->
+<div class="tab-panel" id="tab-flips">
+  <!-- Picker: choose from what you actually own -->
+  <div id="sell-picker-view">
+    <div class="section-title" style="margin-top:0">Sell something you own</div>
+    <div id="sell-holdings-picker"></div>
+  </div>
+
+  <!-- Sale entry: shown after picking a holding -->
+  <div id="sell-entry-view" style="display:none">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.6rem">
+        <div>
+          <div class="card-title" style="margin-bottom:.2rem">Selling</div>
+          <div id="sell-entry-name" style="font-size:.95rem;font-weight:700"></div>
+          <div id="sell-entry-sub" style="font-size:.72rem;color:var(--muted);margin-top:.15rem"></div>
+        </div>
+        <div onclick="cancelSell()" style="color:var(--muted);cursor:pointer;padding:.5rem;min-width:38px;min-height:38px;display:flex;align-items:center;justify-content:center">✕</div>
+      </div>
+      <div class="form-group"><label class="form-label">Sold For ($)</label><input class="form-input" id="sell-price" type="number" step="0.01" placeholder="0.00"></div>
+      <button class="btn btn-gold" onclick="confirmSell()">Mark as Sold</button>
+    </div>
+  </div>
+
+  <div class="section-title">Sale History</div>
+  <div id="flips-list"></div>
+</div>
+
+<!-- SCANNER -->
+<div class="tab-panel" id="tab-scanner">
+  <div class="card">
+    <div class="card-title">Claude AI Coin Scanner</div>
+    <div class="form-group">
+      <label class="form-label">Anthropic API Key</label>
+      <input class="form-input" id="api-key" type="password" placeholder="sk-ant-…" oninput="S.set('apikey',this.value)">
+      <div style="font-size:.6rem;color:var(--muted);margin-top:.25rem">Stored locally. Only sent to api.anthropic.com.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📸 Upload Photos</div>
+    <div class="form-row" style="margin-bottom:.7rem">
+      <div>
+        <div class="form-label" style="margin-bottom:.3rem">OBVERSE (front)</div>
+        <div class="upload-zone" onclick="document.getElementById('obv-input').click()">
+          <div style="font-size:2rem">🪙</div>
+          <div style="font-size:.75rem;color:var(--muted)">Tap to upload</div>
+        </div>
+        <input type="file" id="obv-input" accept="image/*" style="display:none" onchange="previewImg('obv',this)">
+        <img id="obv-preview" style="display:none;width:100%;max-height:160px;object-fit:contain;border-radius:8px;margin-top:.4rem">
+      </div>
+      <div>
+        <div class="form-label" style="margin-bottom:.3rem">REVERSE (back)</div>
+        <div class="upload-zone" onclick="document.getElementById('rev-input').click()">
+          <div style="font-size:2rem">🔄</div>
+          <div style="font-size:.75rem;color:var(--muted)">Tap to upload</div>
+        </div>
+        <input type="file" id="rev-input" accept="image/*" style="display:none" onchange="previewImg('rev',this)">
+        <img id="rev-preview" style="display:none;width:100%;max-height:160px;object-fit:contain;border-radius:8px;margin-top:.4rem">
+      </div>
+    </div>
+    <button class="btn btn-gold" id="scan-btn" onclick="scanCoin()">🔍 Identify &amp; Value</button>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="scan-output" style="display:none">
+    <div class="card" id="scan-id-card">
+      <div class="card-title">⬡ Identification</div>
+      <div id="scan-id-box" style="font-size:.82rem;line-height:1.7;color:var(--text)"></div>
+    </div>
+
+    <div class="card" style="border-color:var(--gold-dim)">
+      <div class="card-title" style="color:var(--gold)">💰 Valuation</div>
+      <div id="scan-val-box" style="font-size:.82rem;line-height:1.7"></div>
+    </div>
+
+    <!-- Streamlined add flow -->
+    <div class="card" id="scan-add-card">
+      <div class="card-title">⬡ Add to Your Records</div>
+      <div id="scan-add-flow">
+        <div style="font-size:.82rem;margin-bottom:.8rem">Did you acquire this coin?</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem">
+          <div onclick="showPriceEntry()" style="background:var(--gold);color:#0a0a0c;border-radius:8px;padding:.65rem;text-align:center;font-size:.82rem;font-weight:700;cursor:pointer;touch-action:manipulation">
+            ✓ Yes — I own it
+          </div>
+          <div onclick="addScanNoPrice()" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.65rem;text-align:center;font-size:.82rem;font-weight:700;cursor:pointer;touch-action:manipulation;color:var(--muted)">
+            👁 Just appraising
+          </div>
+        </div>
+      </div>
+
+      <!-- Price entry (hidden until Yes tapped) -->
+      <div id="scan-price-entry" style="display:none">
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem">What did you pay?</div>
+        <div style="display:flex;gap:.5rem;margin-bottom:.6rem;align-items:center">
+          <span style="color:var(--muted);font-size:.9rem">$</span>
+          <input type="number" id="scan-paid" step="0.01" placeholder="0.00"
+            style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:1.1rem;padding:.5rem .7rem;outline:none">
+          <div onclick="confirmAddScan()" style="background:var(--gold);color:#0a0a0c;border-radius:8px;padding:.55rem 1rem;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap;touch-action:manipulation">Add →</div>
+        </div>
+        <div style="font-size:.65rem;color:var(--muted)">Leave blank if unknown · Adds to Portfolio + Collection</div>
+      </div>
+
+      <div id="scan-added-msg" style="font-size:.75rem;color:var(--green);text-align:center;min-height:1rem;margin-top:.4rem"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Full Analysis</div>
+      <div class="scan-result" id="scan-result"></div>
+    </div>
+  </div>
+</div>
+
+
+</main>
+
+<!-- COIN MODAL -->
+<div class="modal-overlay hidden" id="coin-modal">
+  <div class="modal-box" id="coin-modal-box">
+    <div class="modal-handle"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem">
+      <div style="font-size:.85rem;font-weight:700" id="modal-title">Add Coin</div>
+      <div style="display:flex;gap:.5rem">
+        <div id="modal-delete-btn" onclick="deleteCoin()" style="display:none;color:var(--red);font-size:.75rem;cursor:pointer;padding:.2rem .5rem;border:1px solid var(--red);border-radius:5px;touch-action:manipulation">Delete</div>
+        <div onclick="closeCoinModal()" style="color:var(--muted);font-size:1.3rem;cursor:pointer;padding:.5rem;min-width:38px;min-height:38px;display:flex;align-items:center;justify-content:center;touch-action:manipulation">✕</div>
+      </div>
+    </div>
+
+    <div class="coin-photos">
+      <div class="coin-photo-slot" onclick="triggerPhoto('obv-col')">
+        <img id="obv-col-preview" style="display:none">
+        <span id="obv-col-icon">🪙</span>
+        <div class="coin-photo-label">OBVERSE</div>
+        <input type="file" id="obv-col" accept="image/*" style="display:none" onchange="handleCoinPhoto('obv',this)">
+      </div>
+      <div class="coin-photo-slot" onclick="triggerPhoto('rev-col')">
+        <img id="rev-col-preview" style="display:none">
+        <span id="rev-col-icon">🔄</span>
+        <div class="coin-photo-label">REVERSE</div>
+        <input type="file" id="rev-col" accept="image/*" style="display:none" onchange="handleCoinPhoto('rev',this)">
+      </div>
+      <div class="coin-photo-slot" onclick="triggerPhoto('slab-col')">
+        <img id="slab-col-preview" style="display:none">
+        <span id="slab-col-icon">🏷️</span>
+        <div class="coin-photo-label">SLAB/LABEL</div>
+        <input type="file" id="slab-col" accept="image/*" style="display:none" onchange="handleCoinPhoto('slab',this)">
+      </div>
+    </div>
+
+    <div class="attr-grid">
+      <div style="grid-column:span 2" class="form-group">
+        <label class="form-label">Coin Name / Type</label>
+        <input class="form-input" id="col-name" type="text" placeholder="1921-D Morgan Dollar">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Year</label>
+        <input class="form-input" id="col-year" type="text" placeholder="1921">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mint Mark</label>
+        <select class="form-select" id="col-mint">
+          <option value="">None (P)</option><option value="D">D</option><option value="S">S</option>
+          <option value="O">O</option><option value="CC">CC</option><option value="W">W</option><option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Metal</label>
+        <select class="form-select" id="col-metal">
+          <option value="ag">Silver</option><option value="au">Gold</option>
+          <option value="pt">Platinum</option><option value="pd">Palladium</option><option value="cu">Copper</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Denomination</label>
+        <input class="form-input" id="col-denom" type="text" placeholder="$1 Dollar">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Grade</label>
+        <select class="form-select" id="col-grade">
+          <option value="">Unknown/Raw</option>
+          <option value="MS70">MS-70</option><option value="MS69">MS-69</option><option value="MS68">MS-68</option>
+          <option value="MS67">MS-67</option><option value="MS66">MS-66</option><option value="MS65">MS-65</option>
+          <option value="MS64">MS-64</option><option value="MS63">MS-63</option><option value="MS62">MS-62</option>
+          <option value="MS61">MS-61</option><option value="MS60">MS-60</option>
+          <option value="AU58">AU-58</option><option value="AU55">AU-55</option><option value="AU53">AU-53</option><option value="AU50">AU-50</option>
+          <option value="EF45">EF/XF-45</option><option value="EF40">EF/XF-40</option>
+          <option value="VF35">VF-35</option><option value="VF30">VF-30</option><option value="VF25">VF-25</option><option value="VF20">VF-20</option>
+          <option value="F15">F-15</option><option value="F12">F-12</option>
+          <option value="VG10">VG-10</option><option value="VG8">VG-8</option>
+          <option value="G6">G-6</option><option value="G4">G-4</option>
+          <option value="AG3">AG-3</option><option value="FR2">FR-2</option><option value="PO1">PO-1</option>
+          <option value="PR70">PR/PF-70</option><option value="PR69">PR/PF-69</option><option value="PR68">PR/PF-68</option>
+          <option value="PR67">PR/PF-67</option><option value="PR65">PR/PF-65</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Grading Service</label>
+        <select class="form-select" id="col-service">
+          <option value="raw">Raw/Ungraded</option><option value="PCGS">PCGS</option>
+          <option value="NGC">NGC</option><option value="ANACS">ANACS</option><option value="ICG">ICG</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Cert # (PCGS/NGC)</label>
+      <div style="display:flex;gap:.4rem">
+        <input class="form-input" id="col-cert" type="text" placeholder="PCGS/NGC cert number" style="flex:1">
+        <div onclick="lookupCert()" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:.55rem .7rem;font-size:.72rem;color:var(--gold);cursor:pointer;white-space:nowrap;touch-action:manipulation">Look Up</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Variety / VAM</label>
+      <input class="form-input" id="col-variety" type="text" placeholder="e.g. VAM-4, Top-100, S/S">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Notes / Toning Description</label>
+      <input class="form-input" id="col-notes" type="text" placeholder="Rainbow toning obv, original surfaces">
+    </div>
+
+    <div class="form-row" style="margin-bottom:.7rem">
+      <div class="form-group">
+        <label class="form-label">Cost Paid ($)</label>
+        <input class="form-input" id="col-cost" type="number" step="0.01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Asking Price ($)</label>
+        <input class="form-input" id="col-ask" type="number" step="0.01" placeholder="if for sale">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Date Acquired</label>
+      <input class="form-input" id="col-date" type="date">
+    </div>
+
+    <div class="ai-val-box">
+      <div class="ai-val-title">⬡ AI Valuation</div>
+      <div id="ai-val-content" style="font-size:.78rem;color:var(--muted);line-height:1.6">Enter coin details and tap Get AI Valuation. Requires API key in Scanner tab.</div>
+      <button class="btn btn-outline" style="margin-top:.6rem;font-size:.75rem;padding:.5rem" onclick="getAIValuation()">Get AI Valuation</button>
+    </div>
+
+    <button class="btn btn-gold" onclick="saveCoin()" style="margin-bottom:.5rem">Save to Collection</button>
+    <button class="btn btn-outline" id="modal-mark-owned-btn" onclick="markCoinOwned()" style="display:none;margin-bottom:.5rem;color:var(--green);border-color:var(--green)">✓ I Bought This — Add to Portfolio</button>
+  </div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STORAGE ──
+const mem = {};
+const lsOk = (()=>{try{localStorage.setItem('_t','1');localStorage.removeItem('_t');return true;}catch(e){return false;}})();
+let lastStorageError = null;
+const S = {
+  get(k){try{const r=lsOk?localStorage.getItem('assay_'+k):mem['assay_'+k];return r!=null?JSON.parse(r):null;}catch(e){return null;}},
+  set(k,v){
+    const s=JSON.stringify(v);
+    mem['assay_'+k]=s;
+    if(lsOk){
+      try{
+        localStorage.setItem('assay_'+k,s);
+        lastStorageError=null;
+      }catch(e){
+        lastStorageError=e;
+        console.error('Storage write failed for', k, e);
+        if(typeof toast==='function') toast('⚠️ Storage full — clear old data in Settings');
+        return false;
+      }
+    }
+    return true;
+  },
+  del(k){delete mem['assay_'+k];if(lsOk){try{localStorage.removeItem('assay_'+k);}catch(e){}}}
+};
+
+// ── PRICES ──
+// Fallbacks updated June 2026 — replace if staleness is detected
+let prices = {au:4015.60,ag:58.18,pt:1578,pd:980};
+const cached = S.get('prices');
+// Only use cache if it was fetched recently (within 4 hours) and has plausible values
+const cacheTs = S.get('prices_ts')||0;
+if(cached&&cached.au>1000&&cached.ag>10&&(Date.now()-cacheTs<4*60*60*1000)) prices=cached;
+
+function fmt(n){return '$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function updateTicker(){
+  document.getElementById('t-au').textContent=fmt(prices.au);
+  document.getElementById('t-ag').textContent=fmt(prices.ag);
+  document.getElementById('t-pt').textContent=fmt(prices.pt);
+  document.getElementById('t-pd').textContent=fmt(prices.pd);
+  document.getElementById('tc-au').textContent='';
+  document.getElementById('tc-ag').textContent='';
+  document.getElementById('tc-pt').textContent='';
+  document.getElementById('tc-pd').textContent='';
+  document.getElementById('t-ratio').textContent=(prices.au/prices.ag).toFixed(1)+':1';
+}
+updateTicker();
+
+// Try multiple free CORS-friendly price sources in sequence
+async function fetchPricesViaClaude(){
+  const key = S.get('apikey');
+  if(!key) return false;
+  try{
+    // Use betas header to allow tool use in browser, two-turn conversation
+    const messages = [{role:'user',content:'Search for current precious metals spot prices and return ONLY this format:\nGOLD:XXXX.XX\nSILVER:XX.XX\nPLATINUM:XXXX.XX\nPALLADIUM:XXXX.XX\nUse current USD per troy oz prices.'}];
+    
+    let attempts = 0;
+    while(attempts < 3) {
+      attempts++;
+      const r = await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:300,tools:[{type:'web_search_20250305',name:'web_search'}],messages})
+      });
+      if(!r.ok) return false;
+      const d = await r.json();
+      
+      // Check if it's a final text response
+      const textBlocks = (d.content||[]).filter(b=>b.type==='text');
+      if(textBlocks.length){
+        const txt = textBlocks.map(b=>b.text).join('');
+        const au = parseFloat((txt.match(/GOLD:([\d.]+)/)||[])[1]);
+        const ag = parseFloat((txt.match(/SILVER:([\d.]+)/)||[])[1]);
+        const pt = parseFloat((txt.match(/PLATINUM:([\d.]+)/)||[])[1]);
+        const pd = parseFloat((txt.match(/PALLADIUM:([\d.]+)/)||[])[1]);
+        if(au>1000&&ag>5){
+          prices={au,ag,pt:pt||prices.pt,pd:pd||prices.pd};
+          S.set('prices',prices);S.set('prices_ts',Date.now());
+          updateTicker();renderPortfolio();
+          document.getElementById('price-status').style.color='var(--green)';
+          document.getElementById('price-age').textContent='Live · '+new Date().toLocaleTimeString();
+          return true;
+        }
+      }
+      
+      // If tool_use, add assistant message and tool results, then loop
+      if(d.stop_reason==='tool_use'){
+        const toolUseBlocks = (d.content||[]).filter(b=>b.type==='tool_use');
+        messages.push({role:'assistant',content:d.content});
+        const toolResults = toolUseBlocks.map(b=>({type:'tool_result',tool_use_id:b.id,content:'Search complete'}));
+        messages.push({role:'user',content:toolResults});
+      } else {
+        break; // end_turn with no usable text
+      }
+    }
+  }catch(e){}
+  return false;
+}
+
+async function fetchPrices(){
+  document.getElementById('price-age').textContent='Fetching live prices…';
+
+  // Source 1: api.gold-api.com — free, no key, no rate limits, CORS enabled
+  try{
+    const [agR, auR, ptR, pdR] = await Promise.all([
+      fetch('https://api.gold-api.com/price/XAG',{signal:AbortSignal.timeout(5000)}),
+      fetch('https://api.gold-api.com/price/XAU',{signal:AbortSignal.timeout(5000)}),
+      fetch('https://api.gold-api.com/price/XPT',{signal:AbortSignal.timeout(5000)}),
+      fetch('https://api.gold-api.com/price/XPD',{signal:AbortSignal.timeout(5000)}),
+    ]);
+    if(agR.ok && auR.ok){
+      const [agD, auD, ptD, pdD] = await Promise.all([agR.json(), auR.json(), ptR.json(), pdR.json()]);
+      const au = auD.price, ag = agD.price, pt = ptD.price||prices.pt, pd = pdD.price||prices.pd;
+      if(au>1000&&ag>5){
+        prices={au:parseFloat(au.toFixed(2)),ag:parseFloat(ag.toFixed(2)),pt:parseFloat((pt).toFixed(2)),pd:parseFloat((pd).toFixed(2))};
+        S.set('prices',prices);S.set('prices_ts',Date.now());
+        updateTicker();renderPortfolio();
+        document.getElementById('price-status').style.color='var(--green)';
+        document.getElementById('price-age').textContent='Live · '+new Date().toLocaleTimeString();
+        return;
+      }
+    }
+  }catch(e){}
+
+  // Source 2: Claude API with web search (works anywhere, costs ~$0.001/call)
+  if(await fetchPricesViaClaude()) return;
+
+  // Source 2: goldprice.org
+  try{
+    const r=await fetch('https://data-asg.goldprice.org/dbXRates/USD',{signal:AbortSignal.timeout(5000)});
+    if(r.ok){
+      const d=await r.json();
+      const au=d.items?.[0]?.xauPrice;
+      const ag=d.items?.[0]?.xagPrice;
+      if(au>1000&&ag>5){
+        prices={au:parseFloat(au.toFixed(2)),ag:parseFloat(ag.toFixed(2)),pt:prices.pt,pd:prices.pd};
+        S.set('prices',prices);S.set('prices_ts',Date.now());
+        updateTicker();renderPortfolio();
+        document.getElementById('price-status').style.color='var(--green)';
+        document.getElementById('price-age').textContent='Live · '+new Date().toLocaleTimeString();
+        return;
+      }
+    }
+  }catch(e){}
+
+  // Source 3: metals-api
+  try{
+    const r=await fetch('https://api.metals.live/v1/spot/gold,silver,platinum,palladium',{signal:AbortSignal.timeout(5000)});
+    if(r.ok){
+      const d=await r.json();
+      let au=0,ag=0,pt=0,pd=0;
+      if(Array.isArray(d)){d.forEach(o=>{if(o.gold)au=o.gold;if(o.silver)ag=o.silver;if(o.platinum)pt=o.platinum;if(o.palladium)pd=o.palladium;});}
+      if(au>1000&&ag>5){
+        prices={au,ag,pt:pt||prices.pt,pd:pd||prices.pd};
+        S.set('prices',prices);S.set('prices_ts',Date.now());
+        updateTicker();renderPortfolio();
+        document.getElementById('price-status').style.color='var(--green)';
+        document.getElementById('price-age').textContent='Live · '+new Date().toLocaleTimeString();
+        return;
+      }
+    }
+  }catch(e){}
+
+  // All sources failed
+  const ts=S.get('prices_ts');
+  if(ts){
+    const mins=Math.round((Date.now()-ts)/60000);
+    document.getElementById('price-age').textContent=`Cached ${mins}m ago · Tap to retry`;
+    document.getElementById('price-status').style.color='var(--gold)';
+  } else {
+    document.getElementById('price-age').textContent='Fallback prices · tap to retry live';
+    document.getElementById('price-status').style.color='var(--red)';
+  }
+}
+
+// Manual refresh button in price bar
+document.getElementById('price-age').style.cursor='pointer';
+document.getElementById('price-age').title='Tap to refresh prices';
+document.getElementById('price-age').onclick=()=>{
+  document.getElementById('price-age').textContent='Refreshing…';
+  fetchPrices();
+};
+
+setInterval(fetchPrices,5*60*1000);
+fetchPrices();
+
+// ── TABS ──
+function showTab(name,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='flips'){
+    cancelSell();
+    renderSellPicker();
+  }
+}
+
+// ── HOLDINGS sub-view toggle (Summary vs Registry) ──
+function setHoldingsView(view){
+  const summary = document.getElementById('holdings-summary-view');
+  const registry = document.getElementById('holdings-registry-view');
+  const sBtn = document.getElementById('hv-summary-btn');
+  const rBtn = document.getElementById('hv-registry-btn');
+  if(view==='summary'){
+    summary.style.display='block'; registry.style.display='none';
+    sBtn.classList.add('active'); rBtn.classList.remove('active');
+  } else {
+    summary.style.display='none'; registry.style.display='block';
+    sBtn.classList.remove('active'); rBtn.classList.add('active');
+    renderCollection();
+  }
+}
+
+// ── TOOLS sub-view toggle (Add / Convert / Settings) ──
+function setToolsView(view){
+  const views = {add:'tools-add-view', convert:'tools-convert-view', settings:'tools-settings-view'};
+  const btns = {add:'tv-add-btn', convert:'tv-convert-btn', settings:'tv-settings-btn'};
+  Object.keys(views).forEach(k=>{
+    document.getElementById(views[k]).style.display = (k===view) ? 'block' : 'none';
+    document.getElementById(btns[k]).classList.toggle('active', k===view);
+  });
+}
+
+// ── COIN DB ──
+const COINS={
+  morgan:{ozt:0.7734,purity:0.900,name:'Morgan Dollar'},
+  peace:{ozt:0.7734,purity:0.900,name:'Peace Dollar'},
+  walker:{ozt:0.3617,purity:0.900,name:'Walking Liberty Half'},
+  franklin:{ozt:0.3617,purity:0.900,name:'Franklin Half'},
+  kennedy40:{ozt:0.1479,purity:0.400,name:'Kennedy Half 1965-70'},
+  merc:{ozt:0.0723,purity:0.900,name:'Mercury Dime'},
+  quarter:{ozt:0.1808,purity:0.900,name:'Washington Quarter pre-65'},
+  ase:{ozt:1.000,purity:0.999,name:'American Silver Eagle'},
+  maple_ag:{ozt:1.000,purity:0.9999,name:'Canadian Maple Leaf Ag'},
+  round:{ozt:1.000,purity:0.999,name:'.999 Silver Round'},
+  age1:{ozt:1.0909,purity:0.9167,name:'Gold Eagle 1oz'},
+  age12:{ozt:0.5455,purity:0.9167,name:'Gold Eagle 1/2oz'},
+  age14:{ozt:0.2727,purity:0.9167,name:'Gold Eagle 1/4oz'},
+  age110:{ozt:0.1091,purity:0.9167,name:'Gold Eagle 1/10oz'},
+  agb:{ozt:1.000,purity:0.9999,name:'Gold Buffalo 1oz'},
+  kruger:{ozt:1.0909,purity:0.9167,name:'Krugerrand 1oz'},
+};
+
+function updateCoinOpts(){}
+function fillDefaults(){
+  const t=document.getElementById('add-type').value;
+  if(!t||!COINS[t])return;
+  const c=COINS[t];
+  document.getElementById('add-ozt').value=c.ozt;
+  document.getElementById('add-purity').value=c.purity;
+  if(!document.getElementById('add-name').value)document.getElementById('add-name').value=c.name;
+}
+
+// ── HOLDINGS ──
+function addHolding(){
+  const metal=document.getElementById('add-metal').value;
+  const name=document.getElementById('add-name').value.trim()||'Unknown';
+  const ozt=parseFloat(document.getElementById('add-ozt').value);
+  const purity=parseFloat(document.getElementById('add-purity').value);
+  const qty=parseInt(document.getElementById('add-qty').value)||1;
+  const cost=parseFloat(document.getElementById('add-cost').value)||0;
+  const date=document.getElementById('add-date').value;
+  const notes=document.getElementById('add-notes').value.trim();
+  if(!ozt||!purity){toast('Enter weight and purity');return;}
+  const h=S.get('holdings')||[];
+  h.push({id:Date.now(),metal,name,ozt,purity,qty,cost,date,notes});
+  S.set('holdings',h);
+  toast('Added ✓');
+  document.getElementById('add-name').value='';
+  document.getElementById('add-ozt').value='';
+  document.getElementById('add-purity').value='';
+  document.getElementById('add-cost').value='';
+  document.getElementById('add-notes').value='';
+  document.getElementById('add-qty').value=1;
+  document.getElementById('add-type').value='';
+  renderPortfolio();
+}
+
+function delHolding(id){
+  if(!confirm('Remove?'))return;
+  S.set('holdings',(S.get('holdings')||[]).filter(h=>h.id!==id));
+  renderPortfolio();
+}
+
+function renderPortfolio(){
+  const h=S.get('holdings')||[];
+  const el=document.getElementById('holdings-list');
+  if(!h.length){
+    el.innerHTML='<div class="empty-state"><div style="font-size:2rem">⬡</div>No holdings yet.<br>Tap <b>+ Add</b> to start.</div>';
+    ['pf-melt','pf-cost','pf-pl','pf-plpct'].forEach(id=>{document.getElementById(id).textContent='—';});
+    document.getElementById('breakdown-card').style.display='none';
+    return;
+  }
+  let totalMelt=0,totalCost=0;
+  const bd={au:0,ag:0,pt:0,pd:0};
+  el.innerHTML=h.map(item=>{
+    const spot=prices[item.metal]||0;
+    const melt=item.ozt*item.purity*item.qty*spot;
+    const ct=item.cost*item.qty;
+    const pl=melt-ct;
+    totalMelt+=melt;totalCost+=ct;bd[item.metal]+=melt;
+    const bc={'ag':'badge-ag','au':'badge-au','pt':'badge-pt','pd':'badge-pd'}[item.metal]||'';
+    const mn={'ag':'Ag','au':'Au','pt':'Pt','pd':'Pd'}[item.metal]||'';
+    return `<div class="holding-item ${pl>=0?'gain':'loss'}">
+      <div><div class="h-name">${item.name} <span class="metal-badge ${bc}">${mn}</span></div>
+      <div class="h-detail">${item.qty>1?item.qty+'× · ':''}${item.ozt} ozt · ${(item.purity*100).toFixed(1)}%${item.notes?' · '+item.notes:''}</div></div>
+      <div class="h-right"><div class="h-melt">${fmt(melt)}</div>
+      <div class="h-pl ${pl>=0?'up':'dn'}">${pl>=0?'+':''}${fmt(pl)}</div>
+      <button onclick="delHolding(${item.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;padding:.5rem;min-width:38px;min-height:38px">✕</button></div>
+    </div>`;
+  }).join('');
+  const pl=totalMelt-totalCost,pct=totalCost?(pl/totalCost*100):0;
+  document.getElementById('pf-melt').textContent=fmt(totalMelt);
+  document.getElementById('pf-cost').textContent=fmt(totalCost);
+  document.getElementById('pf-pl').textContent=(pl>=0?'+':'')+fmt(pl);
+  document.getElementById('pf-pl').style.color=pl>=0?'var(--green)':'var(--red)';
+  document.getElementById('pf-plpct').textContent=(pct>=0?'+':'')+pct.toFixed(2)+'%';
+  document.getElementById('pf-plpct').style.color=pct>=0?'var(--green)':'var(--red)';
+  const bHtml=Object.entries(bd).filter(([,v])=>v>0).map(([m,v])=>`<div style="display:flex;justify-content:space-between;padding:.3rem 0;border-bottom:1px solid var(--border);font-size:.8rem"><span>${{au:'Gold',ag:'Silver',pt:'Platinum',pd:'Palladium'}[m]}</span><span>${fmt(v)}</span></div>`).join('');
+  document.getElementById('breakdown-list').innerHTML=bHtml;
+  document.getElementById('breakdown-card').style.display=bHtml?'':'none';
+}
+
+// ── QUICK MELT ──
+function quickMelt(){
+  const g=parseFloat(document.getElementById('qm-g').value)||0;
+  const p=parseFloat(document.getElementById('qm-p').value)||0.999;
+  const m=document.getElementById('qm-metal').value;
+  document.getElementById('qm-result').textContent=g>0?fmt(g/31.1035*p*(prices[m]||0)):'—';
+}
+
+// ── FLIPS ──
+let sellingHoldingId = null;
+
+function renderSellPicker(){
+  const h = S.get('holdings')||[];
+  const el = document.getElementById('sell-holdings-picker');
+  if(!h.length){
+    el.innerHTML = '<div class="empty-state"><div style="font-size:2rem">⬡</div>Nothing to sell yet.<br>Holdings you own will appear here.</div>';
+    return;
+  }
+  el.innerHTML = h.map(item=>{
+    const spot=prices[item.metal]||0;
+    const melt=item.ozt*item.purity*item.qty*spot;
+    const mn={'ag':'Ag','au':'Au','pt':'Pt','pd':'Pd'}[item.metal]||'';
+    const bc={'ag':'badge-ag','au':'badge-au','pt':'badge-pt','pd':'badge-pd'}[item.metal]||'';
+    return `<div class="holding-item" onclick="startSell(${item.id})" style="cursor:pointer">
+      <div><div class="h-name">${item.name} <span class="metal-badge ${bc}">${mn}</span></div>
+      <div class="h-detail">${item.qty>1?item.qty+'× · ':''}${item.ozt} ozt${item.notes?' · '+item.notes:''}</div></div>
+      <div class="h-right"><div class="h-melt">${fmt(melt)}</div>
+      <div style="font-size:.65rem;color:var(--muted)">cost ${fmt(item.cost)}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function startSell(holdingId){
+  const h = S.get('holdings')||[];
+  const item = h.find(x=>x.id===holdingId);
+  if(!item){toast('Holding not found');return;}
+  sellingHoldingId = holdingId;
+
+  const mn={'ag':'Silver','au':'Gold','pt':'Platinum','pd':'Palladium'}[item.metal]||'';
+  document.getElementById('sell-entry-name').textContent = item.name;
+  document.getElementById('sell-entry-sub').textContent = `${mn} · ${item.ozt} ozt · cost ${fmt(item.cost)}`;
+  document.getElementById('sell-price').value = '';
+
+  document.getElementById('sell-picker-view').style.display='none';
+  document.getElementById('sell-entry-view').style.display='block';
+  setTimeout(()=>document.getElementById('sell-price').focus(),100);
+}
+
+function cancelSell(){
+  sellingHoldingId = null;
+  document.getElementById('sell-picker-view').style.display='block';
+  document.getElementById('sell-entry-view').style.display='none';
+}
+
+function confirmSell(){
+  if(!sellingHoldingId){toast('No item selected');return;}
+  const soldFor = parseFloat(document.getElementById('sell-price').value);
+  if(!soldFor || soldFor<=0){toast('Enter a sale price');return;}
+
+  const h = S.get('holdings')||[];
+  const item = h.find(x=>x.id===sellingHoldingId);
+  if(!item){toast('Holding not found');return;}
+
+  // Log as a closed flip with real cost basis
+  const f = S.get('flips')||[];
+  f.unshift({
+    id:Date.now(), name:item.name, metal:item.metal, qty:item.qty||1,
+    buy:item.cost||0, sell:soldFor, date:new Date().toISOString().slice(0,10)
+  });
+  S.set('flips', f);
+
+  // Remove from active holdings — you no longer own it
+  S.set('holdings', h.filter(x=>x.id!==sellingHoldingId));
+  renderPortfolio();
+
+  // Unlink (but keep) the Registry/Collection entry, mark as sold
+  const coins = S.get('collection')||[];
+  const linked = coins.find(c=>c.ownedHoldingId===sellingHoldingId);
+  if(linked){ linked.ownedHoldingId = null; linked.notes = (linked.notes?linked.notes+' · ':'')+'SOLD '+fmt(soldFor); }
+  S.set('collection', coins);
+  renderCollection();
+
+  sellingHoldingId = null;
+  document.getElementById('sell-picker-view').style.display='block';
+  document.getElementById('sell-entry-view').style.display='none';
+  renderSellPicker();
+  renderFlips();
+  toast('Marked as sold ✓');
+}
+
+function delFlip(id){S.set('flips',(S.get('flips')||[]).filter(f=>f.id!==id));renderFlips();}
+function renderFlips(){
+  const f=S.get('flips')||[];const el=document.getElementById('flips-list');
+  if(!f.length){el.innerHTML='<div class="empty-state">No sales yet.</div>';return;}
+  el.innerHTML=f.map(fl=>{
+    const tb=fl.buy*fl.qty,ts=fl.sell!=null?fl.sell*fl.qty:null,pl=ts!=null?ts-tb:null;
+    const st=ts==null?'open':pl>=0?'closed':'loss';const sl=ts==null?'OPEN':pl>=0?'SOLD ✓':'LOSS';
+    return `<div class="flip-item"><div class="flip-header"><div class="flip-name">${fl.name} <span style="font-size:.65rem;color:var(--muted)">${fl.date}</span></div>
+    <div><span class="flip-status ${st}">${sl}</span><button onclick="delFlip(${fl.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;margin-left:.2rem;font-size:1rem;padding:.5rem;min-width:38px;min-height:38px">✕</button></div></div>
+    <div class="flip-nums"><div><div class="flip-num-label">Bought</div><div class="flip-num-val">${fmt(tb)}</div></div><div><div class="flip-num-label">Sold</div><div class="flip-num-val">${ts!=null?fmt(ts):'—'}</div></div><div><div class="flip-num-label">P&L</div><div class="flip-num-val" style="color:${pl==null?'var(--muted)':pl>=0?'var(--green)':'var(--red)'}">${pl==null?'—':(pl>=0?'+':'')+fmt(Math.abs(pl))}</div></div></div></div>`;
+  }).join('');
+}
+
+// ── MARKDOWN RENDERER ──
+function mdInline(s) {
+  return s
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,.07);padding:.1em .3em;border-radius:3px;font-family:monospace;font-size:.9em">$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+}
+
+function mdToHtml(md) {
+  if (!md) return '';
+  const lines = md.split('\n');
+  let out = '';
+  let inTable = false;
+  let tableHasHead = false;
+  let tableRowCount = 0;
+  let inList = false;
+  let inOl = false;
+  let inCode = false;
+  let codeLines = [];
+
+  const closeTable = () => {
+    if (!inTable) return;
+    // if we never got a separator, close thead now
+    if (!tableHasHead) out += '</thead><tbody>';
+    out += '</tbody></table>';
+    inTable = false; tableHasHead = false; tableRowCount = 0;
+  };
+  const closeList  = () => { if (inList)  { out += '</ul>';  inList  = false; } };
+  const closeOl    = () => { if (inOl)    { out += '</ol>';  inOl    = false; } };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Code fence ```
+    if (/^```/.test(trimmed)) {
+      if (!inCode) {
+        inCode = true; codeLines = [];
+      } else {
+        out += '<pre style="background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;padding:.5rem .7rem;overflow-x:auto;font-size:.75rem;font-family:monospace;margin:.4rem 0">'
+          + codeLines.map(l=>l.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')).join('\n')
+          + '</pre>';
+        inCode = false;
+      }
+      continue;
+    }
+    if (inCode) { codeLines.push(line); continue; }
+
+    // HR / Unicode divider ⸻ ---
+    if (/^(---+|⸻+)$/.test(trimmed)) {
+      closeTable(); closeList(); closeOl();
+      out += '<hr>'; continue;
+    }
+
+    // Headings
+    const h3 = line.match(/^### (.+)/);
+    const h2 = line.match(/^## (.+)/);
+    const h1 = line.match(/^# (.+)/);
+    if (h3) { closeTable(); closeList(); closeOl(); out += '<h3>' + mdInline(h3[1]) + '</h3>'; continue; }
+    if (h2) { closeTable(); closeList(); closeOl(); out += '<h2>' + mdInline(h2[1]) + '</h2>'; continue; }
+    if (h1) { closeTable(); closeList(); closeOl(); out += '<h1>' + mdInline(h1[1]) + '</h1>'; continue; }
+
+    // Blockquote >
+    const bq = line.match(/^>\s*(.*)/);
+    if (bq) {
+      closeTable(); closeList(); closeOl();
+      out += `<blockquote style="border-left:3px solid var(--gold-dim);margin:.3rem 0;padding:.2rem .6rem;color:var(--muted);font-size:.78rem">${mdInline(bq[1])}</blockquote>`;
+      continue;
+    }
+
+    // Table rows
+    if (/^\|/.test(line)) {
+      closeList(); closeOl();
+      // Separator row |---|---|
+      if (/^\|[-| :]+\|$/.test(trimmed)) {
+        if (inTable && !tableHasHead) { out += '</thead><tbody>'; tableHasHead = true; }
+        continue;
+      }
+      if (!inTable) { out += '<table><thead>'; inTable = true; tableHasHead = false; tableRowCount = 0; }
+      const cells = line.split('|').slice(1, -1);
+      // If no separator seen yet, peek ahead — if next non-empty line is a separator use th, else auto-promote first row to th
+      const isHead = !tableHasHead;
+      if (isHead && tableRowCount > 0 && !tableHasHead) {
+        // Already emitted rows without knowing if head — treat as td
+      }
+      const tag = isHead ? 'th' : 'td';
+      out += '<tr>' + cells.map(c => `<${tag}>${mdInline(c.trim())}</${tag}>`).join('') + '</tr>';
+      tableRowCount++;
+      // peek: if next line is separator, we'll handle it above. If not and this was first row, close thead
+      if (isHead) {
+        const nextLine = (lines[i+1]||'').trim();
+        if (!/^\|[-| :]+\|$/.test(nextLine)) {
+          out += '</thead><tbody>'; tableHasHead = true;
+        }
+      }
+      continue;
+    } else {
+      closeTable();
+    }
+
+    // Numbered list  1. item
+    const oli = line.match(/^\d+\.\s(.+)/);
+    if (oli) {
+      closeList();
+      if (!inOl) { out += '<ol style="padding-left:1.1rem;margin:.2rem 0">'; inOl = true; }
+      out += '<li>' + mdInline(oli[1]) + '</li>';
+      continue;
+    } else { closeOl(); }
+
+    // Bullet list - item  OR  ✅ item
+    const li = line.match(/^[-*•✅⚠️]\s(.+)/);
+    if (li) {
+      closeOl();
+      if (!inList) { out += '<ul>'; inList = true; }
+      // checkmarks get color
+      const icon = /^✅/.test(trimmed) ? '<span style="color:var(--green)">✅</span> ' : /^⚠️/.test(trimmed) ? '<span style="color:var(--gold)">⚠️</span> ' : '';
+      out += '<li>' + icon + mdInline(li[1]) + '</li>';
+      continue;
+    } else { closeList(); }
+
+    // Empty line
+    if (!trimmed) continue;
+
+    // Regular paragraph
+    out += '<p>' + mdInline(line) + '</p>';
+  }
+
+  closeTable();
+  closeList();
+  closeOl();
+  return out;
+}
+
+// ── SCANNER ──
+let obvData=null,revData=null;
+let lastScanData = null;
+
+function previewImg(side,input){
+  const f=input.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const d=e.target.result;
+    document.getElementById(side+'-preview').src=d;
+    document.getElementById(side+'-preview').style.display='block';
+    if(side==='obv')obvData=d.split(',')[1];else revData=d.split(',')[1];
+  };
+  reader.readAsDataURL(f);
+}
+
+async function scanCoin(){
+  const key=S.get('apikey')||document.getElementById('api-key').value.trim();
+  if(!key){toast('Enter API key first');return;}
+  if(!obvData&&!revData){toast('Upload at least one photo');return;}
+  const btn=document.getElementById('scan-btn');
+  btn.innerHTML='<span class="spinner"></span>Analyzing…';btn.disabled=true;
+  document.getElementById('scan-output').style.display='none';
+  resetScanAddFlow();
+  lastScanData=null;
+
+  const content=[];
+  if(obvData)content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:obvData}},{type:'text',text:'OBVERSE (front):'});
+  if(revData)content.push({type:'image',source:{type:'base64',media_type:'image/jpeg',data:revData}},{type:'text',text:'REVERSE (back):'});
+
+  content.push({type:'text',text:`You are an expert numismatist and precious metals specialist. Analyze the coin image(s) provided.
+
+PART 1 — OUTPUT THIS EXACT BLOCK FIRST, NO DEVIATIONS, NO EXTRA TEXT BEFORE IT:
+
+COIN: [full name e.g. "1921-D Morgan Dollar"]
+YEAR: [year]
+MINT: [mint mark or "None"]
+METAL: [silver/gold/platinum/palladium/copper]
+DENOMINATION: [e.g. "$1 Dollar"]
+PURITY: [decimal e.g. 0.900]
+TROY_OZ: [troy oz silver/gold content e.g. 0.7734]
+GRADE: [Sheldon grade e.g. "MS66" or "VF30" or "Raw/Unknown"]
+VARIETY: [VAM, variety, or series designation if visible, else "None"]
+TONING: [one sentence on surfaces and any toning observed]
+RED_FLAGS: [cleaning, damage, counterfeiting concerns, or "None"]
+MELT_VALUE: [dollar amount at Ag $${prices.ag.toFixed(2)}/ozt · Au $${prices.au.toFixed(0)}/ozt]
+RETAIL_LOW: [conservative retail estimate]
+RETAIL_HIGH: [optimistic retail estimate]
+NOTES: [one sentence of the single most important numismatic observation]
+---END_BLOCK---
+
+PART 2 — After the block above, write a full expert numismatic analysis in markdown using these sections:
+
+## 1. Identification
+## 2. Composition & Specifications
+## 3. Grade Estimate (Sheldon Scale)
+## 4. Toning & Surfaces
+## 5. Melt Value
+## 6. Numismatic Premium Estimate
+Include a markdown table: | Grade | Est. Value |
+## 7. Authenticity Indicators
+## 8. Overall Assessment
+
+Use **bold** for key terms. Be precise about Ag₂S thin-film progression if toning is present. Include actual mintage figures where known. Current spot: Ag $${prices.ag.toFixed(2)}/ozt · Au $${prices.au.toFixed(0)}/ozt.`});
+
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:3000,messages:[{role:'user',content}]})});
+    const d=await r.json();
+    let txt=d.content?.[0]?.text||'';
+    if(!txt||d.error){
+      document.getElementById('scan-result').textContent=d.error?.message||'Scan failed';
+      document.getElementById('scan-output').style.display='block';
+      btn.innerHTML='🔍 Identify & Value';btn.disabled=false;return;
+    }
+    if(d.stop_reason==='max_tokens'){
+      txt += '\n\n---\n*[Analysis truncated — response exceeded length limit. Core identification and valuation above are complete.]*';
+    }
+
+    // Split response into structured block and full analysis
+    const splitIdx = txt.indexOf('---END_BLOCK---');
+    const structuredBlock = splitIdx >= 0 ? txt.slice(0, splitIdx) : txt;
+    const analysisText   = splitIdx >= 0 ? txt.slice(splitIdx + 15).trim() : '';
+
+    // Parse structured block
+    const parse=(key)=>{const m=structuredBlock.match(new RegExp(key+':\\s*(.+)'));return m?m[1].trim():'';};
+    // Compress photos for storage (full-res already sent to API above for analysis quality)
+    const obvStored = obvData ? await compressImage('data:image/jpeg;base64,'+obvData, 500, 0.8) : null;
+    const revStored = revData ? await compressImage('data:image/jpeg;base64,'+revData, 500, 0.8) : null;
+
+    lastScanData={
+      name:parse('COIN'),year:parse('YEAR'),mint:parse('MINT').replace(/none/i,''),
+      metal:({'silver':'ag','gold':'au','platinum':'pt','palladium':'pd','copper':'cu'})[parse('METAL').toLowerCase()]||'ag',
+      denom:parse('DENOMINATION'),purity:parseFloat(parse('PURITY'))||0,
+      ozt:parseFloat(parse('TROY_OZ'))||0,grade:parse('GRADE').replace(/raw\/unknown/i,''),
+      variety:parse('VARIETY').replace(/none/i,''),toning:parse('TONING'),
+      redFlags:parse('RED_FLAGS'),meltVal:parse('MELT_VALUE'),
+      retailLow:parse('RETAIL_LOW'),retailHigh:parse('RETAIL_HIGH'),notes:parse('NOTES'),
+      obvPhoto:obvStored,
+      revPhoto:revStored,
+      fullText:txt, analysisText
+    };
+
+    // Render ID card
+    const metalName={ag:'Silver',au:'Gold',pt:'Platinum',pd:'Palladium',cu:'Copper'}[lastScanData.metal]||'';
+    const mintStr=lastScanData.mint?(' · '+lastScanData.mint+' Mint'):'';
+    document.getElementById('scan-id-box').innerHTML=`
+      <div style="font-size:1rem;font-weight:700;color:var(--gold);margin-bottom:.4rem">${lastScanData.name}</div>
+      <div style="font-size:.8rem;margin-bottom:.6rem;color:var(--muted)">${metalName}${mintStr}${lastScanData.denom?' · '+lastScanData.denom:''}</div>
+      ${lastScanData.grade?`<div style="margin-bottom:.3rem"><span class="grade-badge ${gradeBadgeClass(lastScanData.grade)}">${lastScanData.grade}</span></div>`:''}
+      ${lastScanData.variety&&lastScanData.variety!=='None'?`<div style="font-size:.72rem;color:var(--silver);margin-bottom:.3rem">🔍 ${lastScanData.variety}</div>`:''}
+      <div style="font-size:.72rem;color:var(--muted);margin-top:.3rem">${lastScanData.toning}</div>
+      ${lastScanData.redFlags&&lastScanData.redFlags!=='None'?`<div style="font-size:.72rem;color:var(--red);margin-top:.3rem">⚠️ ${lastScanData.redFlags}</div>`:''}
+    `;
+
+    // Render valuation card
+    document.getElementById('scan-val-box').innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;text-align:center">
+        <div><div style="font-size:.58rem;color:var(--muted);text-transform:uppercase">Melt</div><div style="font-size:.95rem;font-weight:700;color:var(--silver)">${lastScanData.meltVal}</div></div>
+        <div><div style="font-size:.58rem;color:var(--muted);text-transform:uppercase">Retail Low</div><div style="font-size:.95rem;font-weight:700;color:var(--gold)">${lastScanData.retailLow}</div></div>
+        <div><div style="font-size:.58rem;color:var(--muted);text-transform:uppercase">Retail High</div><div style="font-size:.95rem;font-weight:700;color:var(--gold)">${lastScanData.retailHigh}</div></div>
+      </div>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:.6rem">${lastScanData.notes}</div>
+    `;
+
+    // ── FULL ANALYSIS: render Part 2 markdown; fall back to full text ──
+    const mdSource = analysisText || txt;
+    document.getElementById('scan-result').innerHTML = mdToHtml(mdSource);
+    document.getElementById('scan-output').style.display='block';
+  }catch(e){
+    document.getElementById('scan-result').innerHTML='<p style="color:var(--red)">Error: '+e.message+'</p>';
+    document.getElementById('scan-output').style.display='block';
+  }
+  btn.innerHTML='🔍 Identify & Value';btn.disabled=false;
+}
+
+function showPriceEntry(){
+  document.getElementById('scan-add-flow').style.display='none';
+  document.getElementById('scan-price-entry').style.display='block';
+  setTimeout(()=>document.getElementById('scan-paid').focus(),100);
+}
+
+function confirmAddScan(){
+  if(!lastScanData){toast('Scan a coin first');return;}
+  const paid=parseFloat(document.getElementById('scan-paid').value)||0;
+  _addScanToRecords(paid);
+}
+
+function addScanNoPrice(){
+  if(!lastScanData){toast('Scan a coin first');return;}
+  // Just save to collection as reference, no portfolio entry
+  _addScanToCollection(0, false);
+  const m=document.getElementById('scan-added-msg');
+  m.textContent='✓ Saved to Collection for reference';
+  setTimeout(()=>m.textContent='',4000);
+  toast('Saved to Collection ✓');
+}
+
+function _addScanToRecords(costPaid){
+  // Add to Portfolio (holdings) for melt tracking
+  const h=S.get('holdings')||[];
+  const holdingId = Date.now();
+  h.unshift({
+    id:holdingId,metal:lastScanData.metal,name:lastScanData.name,
+    ozt:lastScanData.ozt||0.5,purity:lastScanData.purity||0.999,qty:1,
+    cost:costPaid,date:new Date().toISOString().slice(0,10),
+    notes:(lastScanData.grade?lastScanData.grade+' · ':'')+lastScanData.toning
+  });
+  S.set('holdings',h);
+  renderPortfolio();
+
+  // Also add to Collection registry, linked to this holding
+  _addScanToCollection(costPaid, true, holdingId);
+
+  const m=document.getElementById('scan-added-msg');
+  m.textContent=costPaid>0
+    ? `✓ Added — paid $${costPaid.toFixed(2)} · P&L tracked in Portfolio`
+    : '✓ Added to Portfolio + Collection';
+  setTimeout(()=>m.textContent='',5000);
+  toast('Added ✓');
+}
+
+function _addScanToCollection(costPaid, fromPurchase, holdingId){
+  const coins=S.get('collection')||[];
+  coins.unshift({
+    id:String(Date.now()),name:lastScanData.name,year:lastScanData.year,mint:lastScanData.mint,
+    metal:lastScanData.metal,denom:lastScanData.denom,grade:lastScanData.grade,
+    service:'raw',cert:'',variety:lastScanData.variety,
+    notes:lastScanData.toning+(lastScanData.redFlags&&lastScanData.redFlags!=='None'?' | ⚠️ '+lastScanData.redFlags:''),
+    cost:costPaid,ask:0,date:new Date().toISOString().slice(0,10),
+    obvPhoto:lastScanData.obvPhoto,revPhoto:lastScanData.revPhoto,slabPhoto:null,
+    aiValText:`Melt: ${lastScanData.meltVal} | Retail: ${lastScanData.retailLow}–${lastScanData.retailHigh}\n${lastScanData.notes}`,
+    aiValue:parseFloat((lastScanData.retailHigh||'0').replace(/[^0-9.]/g,''))||0,
+    ownedHoldingId: holdingId || null
+  });
+  S.set('collection',coins);
+  renderCollection();
+}
+
+function markCoinOwned(){
+  if(!editingCoinId){toast('Save the coin first');return;}
+  const coins = S.get('collection')||[];
+  const c = coins.find(x=>x.id===editingCoinId);
+  if(!c){toast('Coin not found');return;}
+  const costInput = parseFloat(document.getElementById('col-cost').value)||0;
+
+  // Create a holding linked to this coin
+  const h = S.get('holdings')||[];
+  const holdingId = Date.now();
+  h.unshift({
+    id:holdingId, metal:c.metal, name:c.name,
+    ozt:0.5, purity:0.999, qty:1, cost:costInput,
+    date:new Date().toISOString().slice(0,10),
+    notes:(c.grade?c.grade+' · ':'')+(c.notes||'')
+  });
+  S.set('holdings',h);
+  renderPortfolio();
+
+  // Mark the collection entry as linked + update its cost
+  c.ownedHoldingId = holdingId;
+  c.cost = costInput;
+  S.set('collection',coins);
+  renderCollection();
+
+  document.getElementById('modal-mark-owned-btn').style.display='none';
+  toast('Added to Portfolio ✓');
+}
+function resetScanAddFlow(){
+  const flow=document.getElementById('scan-add-flow');
+  const entry=document.getElementById('scan-price-entry');
+  const paid=document.getElementById('scan-paid');
+  const msg=document.getElementById('scan-added-msg');
+  if(flow) flow.style.display='block';
+  if(entry) entry.style.display='none';
+  if(paid) paid.value='';
+  if(msg) msg.textContent='';
+}
+
+// ── CONVERTER ──
+let cvLock=false;
+const G_OZT=31.1035,G_DWT=1.55517;
+function cvG(){if(cvLock)return;cvLock=true;const g=parseFloat(document.getElementById('cv-g').value)||0;document.getElementById('cv-ozt').value=(g/G_OZT).toFixed(4);document.getElementById('cv-dwt').value=(g/G_DWT).toFixed(3);cvLock=false;}
+function cvOzt(){if(cvLock)return;cvLock=true;const o=parseFloat(document.getElementById('cv-ozt').value)||0;document.getElementById('cv-g').value=(o*G_OZT).toFixed(3);document.getElementById('cv-dwt').value=(o*20).toFixed(3);cvLock=false;}
+function cvDwt(){if(cvLock)return;cvLock=true;const d=parseFloat(document.getElementById('cv-dwt').value)||0;document.getElementById('cv-g').value=(d*G_DWT).toFixed(3);document.getElementById('cv-ozt').value=(d/20).toFixed(4);cvLock=false;}
+function spotMelt(){const m=document.getElementById('sm-metal').value,o=parseFloat(document.getElementById('sm-ozt').value)||0,p=parseFloat(document.getElementById('sm-purity').value)||0.999,q=parseInt(document.getElementById('sm-qty').value)||1;document.getElementById('sm-result').textContent=o>0?fmt(o*p*q*(prices[m]||0)):'$—';}
+function junkCalc(){const f=parseFloat(document.getElementById('junk-face').value)||0,r=parseFloat(document.getElementById('junk-type').value),sp=prices.ag||32.80;document.getElementById('junk-result').textContent=f>0?`${fmt(f*r*sp)} melt · @10%: ${fmt(f*r*sp*1.1)}`:'—';}
+
+// ── SAVE / LOAD ──
+function saveStack(){
+  const data={v:1,saved:new Date().toISOString(),holdings:S.get('holdings')||[],flips:S.get('flips')||[],collection:S.get('collection')||[]};
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='stacktrack-backup.json';document.body.appendChild(a);a.click();document.body.removeChild(a);
+  const m=document.getElementById('save-msg');m.textContent='✓ Saved — keep stacktrack-backup.json in iCloud';setTimeout(()=>m.textContent='',4000);
+}
+function loadStack(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.holdings)S.set('holdings',d.holdings);if(d.flips)S.set('flips',d.flips);if(d.collection)S.set('collection',d.collection);renderPortfolio();renderFlips();renderCollection();const m=document.getElementById('save-msg');m.textContent=`✓ Loaded ${(d.holdings||[]).length} holdings · ${(d.collection||[]).length} coins`;setTimeout(()=>m.textContent='',4000);}catch(err){toast('Invalid file');}};
+  r.readAsText(file);e.target.value='';
+}
+
+// ── MANUAL PRICE OVERRIDE ──
+function applyManualPrices(){
+  const au=parseFloat(document.getElementById('set-au').value);
+  const ag=parseFloat(document.getElementById('set-ag').value);
+  const pt=parseFloat(document.getElementById('set-pt').value);
+  const pd=parseFloat(document.getElementById('set-pd').value);
+  if(!au||!ag){toast('Enter at least Au and Ag prices');return;}
+  prices={au,ag,pt:pt||prices.pt,pd:pd||prices.pd};
+  S.set('prices',prices);S.set('prices_ts',Date.now());
+  updateTicker();renderPortfolio();
+  document.getElementById('price-status').style.color='var(--gold)';
+  document.getElementById('price-age').textContent='Manual · '+new Date().toLocaleTimeString();
+  toast('Prices updated ✓');
+}
+
+// ── EXPORT/IMPORT ──
+function exportData(){saveStack();}
+function importData(e){loadStack(e);}
+function clearAll(){if(!confirm('Clear ALL data?'))return;['holdings','flips','prices','prices_ts','collection'].forEach(k=>S.del(k));renderPortfolio();renderFlips();renderCollection();toast('Cleared');}
+
+// ── COLLECTION ──
+let colSort = 'date';
+let colFilter = 'all';
+let editingCoinId = null;
+let coinPhotos = {obv:null, rev:null, slab:null};
+
+function setSort(s, el) {
+  colSort = s; colFilter = 'all';
+  document.querySelectorAll('.sort-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderCollection();
+}
+function filterMetal(m, el) {
+  colFilter = m;
+  document.querySelectorAll('.sort-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderCollection();
+}
+
+function gradeNum(g) {
+  if (!g) return -1;
+  const n = parseInt(g.replace(/[A-Z]+/,''));
+  if (g.startsWith('MS') || g.startsWith('PR')) return 60 + (n - 60);
+  if (g.startsWith('AU')) return 50 + (n - 50);
+  if (g.startsWith('EF') || g.startsWith('XF')) return 40 + (n - 40) * 0.1;
+  if (g.startsWith('VF')) return 20 + (n - 20) * 0.1;
+  if (g.startsWith('F')) return 12;
+  if (g.startsWith('VG')) return 8;
+  if (g.startsWith('G')) return 4;
+  return 1;
+}
+
+function gradeBadgeClass(g) {
+  if (!g) return '';
+  if (g.startsWith('MS') || g.startsWith('PR')) return 'grade-ms';
+  if (g.startsWith('AU')) return 'grade-au';
+  if (g.startsWith('EF') || g.startsWith('XF')) return 'grade-ef';
+  if (g.startsWith('VF')) return 'grade-vf';
+  if (g.startsWith('F') || g.startsWith('VG') || g.startsWith('G')) return 'grade-f';
+  return 'grade-poor';
+}
+
+function renderCollection() {
+  let coins = S.get('collection') || [];
+  if (colFilter !== 'all') coins = coins.filter(c => c.metal === colFilter);
+  coins = [...coins].sort((a, b) => {
+    if (colSort === 'date') return (b.id||0) - (a.id||0);
+    if (colSort === 'date_asc') return (a.id||0) - (b.id||0);
+    if (colSort === 'grade') return gradeNum(b.grade) - gradeNum(a.grade);
+    if (colSort === 'metal') return (a.metal||'').localeCompare(b.metal||'');
+    if (colSort === 'value') return (b.aiValue||b.cost||0) - (a.aiValue||a.cost||0);
+    return 0;
+  });
+  const grid = document.getElementById('col-grid');
+  const empty = document.getElementById('col-empty');
+  if (!coins.length) { grid.innerHTML = ''; empty.style.display = ''; return; }
+  empty.style.display = 'none';
+  grid.innerHTML = coins.map(c => {
+    const imgHtml = c.obvPhoto
+      ? `<img src="${c.obvPhoto}" style="width:100%;height:100%;object-fit:cover">`
+      : `<div style="font-size:2rem;display:flex;align-items:center;justify-content:center;width:100%;height:100%">🪙</div>`;
+    const badgeCls = gradeBadgeClass(c.grade);
+    const val = c.aiValue ? fmt(c.aiValue) : (c.cost ? fmt(c.cost)+' cost' : '—');
+    const metalColor = {ag:'var(--silver)',au:'var(--gold)',pt:'var(--platinum)',pd:'var(--palladium)',cu:'#b87333'}[c.metal]||'var(--text)';
+    return `<div class="col-card" onclick="openCoinModal('${c.id}')">
+      <div class="col-card-img" style="height:140px;overflow:hidden">${imgHtml}</div>
+      <div class="col-card-body">
+        <div class="col-card-name">${c.name||'Unknown'}</div>
+        <div class="col-card-grade">
+          ${c.grade?`<span class="grade-badge ${badgeCls}">${c.grade}</span> `:''}
+          <span style="color:${metalColor};font-size:.6rem">${{ag:'Ag',au:'Au',pt:'Pt',pd:'Pd',cu:'Cu'}[c.metal]||''}</span>
+          ${c.service&&c.service!=='raw'?`<span style="font-size:.6rem;color:var(--muted)"> · ${c.service}</span>`:''}
+        </div>
+        <div class="col-card-val">${val}${c.ask?` · Ask: ${fmt(c.ask)}`:''}${c.variety?` · ${c.variety}`:''}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openCoinModal(id) {
+  editingCoinId = id;
+  coinPhotos = {obv:null,rev:null,slab:null};
+  const modal = document.getElementById('coin-modal');
+  const delBtn = document.getElementById('modal-delete-btn');
+  const ownedBtn = document.getElementById('modal-mark-owned-btn');
+  modal.classList.remove('hidden');
+  document.getElementById('col-date').value = new Date().toISOString().slice(0,10);
+
+  if (id) {
+    const coins = S.get('collection') || [];
+    const c = coins.find(x => x.id === id);
+    if (!c) return;
+    document.getElementById('modal-title').textContent = 'Edit Coin';
+    delBtn.style.display = 'block';
+    ownedBtn.style.display = c.ownedHoldingId ? 'none' : 'block';
+    document.getElementById('col-name').value = c.name||'';
+    document.getElementById('col-year').value = c.year||'';
+    document.getElementById('col-mint').value = c.mint||'';
+    document.getElementById('col-metal').value = c.metal||'ag';
+    document.getElementById('col-denom').value = c.denom||'';
+    document.getElementById('col-grade').value = c.grade||'';
+    document.getElementById('col-service').value = c.service||'raw';
+    document.getElementById('col-cert').value = c.cert||'';
+    document.getElementById('col-variety').value = c.variety||'';
+    document.getElementById('col-notes').value = c.notes||'';
+    document.getElementById('col-cost').value = c.cost||'';
+    document.getElementById('col-ask').value = c.ask||'';
+    document.getElementById('col-date').value = c.date||'';
+    if (c.obvPhoto) { coinPhotos.obv = c.obvPhoto; showPhotoPreview('obv', c.obvPhoto); }
+    if (c.revPhoto) { coinPhotos.rev = c.revPhoto; showPhotoPreview('rev', c.revPhoto); }
+    if (c.slabPhoto) { coinPhotos.slab = c.slabPhoto; showPhotoPreview('slab', c.slabPhoto); }
+    if (c.aiValText) document.getElementById('ai-val-content').textContent = c.aiValText;
+    else document.getElementById('ai-val-content').textContent = 'Tap Get AI Valuation.';
+  } else {
+    document.getElementById('modal-title').textContent = 'Add Coin';
+    delBtn.style.display = 'none';
+    ownedBtn.style.display = 'none';
+    ['col-name','col-year','col-cert','col-variety','col-notes','col-cost','col-ask'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('col-mint').value = '';
+    document.getElementById('col-metal').value = 'ag';
+    document.getElementById('col-grade').value = '';
+    document.getElementById('col-service').value = 'raw';
+    ['obv','rev','slab'].forEach(s => { document.getElementById(s+'-col-preview').style.display='none'; document.getElementById(s+'-col-icon').style.display=''; });
+    document.getElementById('ai-val-content').textContent = 'Enter coin details and tap Get AI Valuation.';
+  }
+}
+
+function closeCoinModal() {
+  document.getElementById('coin-modal').classList.add('hidden');
+  editingCoinId = null;
+  coinPhotos = {obv:null,rev:null,slab:null};
+}
+
+function triggerPhoto(inputId) { document.getElementById(inputId).click(); }
+
+function compressImage(dataUrl, maxW=400, quality=0.75){
+  return new Promise((resolve)=>{
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxW / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(dataUrl); // fallback to original if compression fails
+    img.src = dataUrl;
+  });
+}
+
+function handleCoinPhoto(side, input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async e => {
+    const compressed = await compressImage(e.target.result, 400, 0.75);
+    coinPhotos[side] = compressed;
+    showPhotoPreview(side, compressed);
+  };
+  reader.readAsDataURL(file);
+}
+
+function showPhotoPreview(side, src) {
+  const preview = document.getElementById(side+'-col-preview');
+  const icon = document.getElementById(side+'-col-icon');
+  preview.src = src; preview.style.display = 'block';
+  if (icon) icon.style.display = 'none';
+}
+
+function saveCoin() {
+  const name = document.getElementById('col-name').value.trim();
+  if (!name) { toast('Enter coin name'); return; }
+  const coins = S.get('collection') || [];
+  const coin = {
+    id: editingCoinId || String(Date.now()),
+    name, year: document.getElementById('col-year').value,
+    mint: document.getElementById('col-mint').value,
+    metal: document.getElementById('col-metal').value,
+    denom: document.getElementById('col-denom').value,
+    grade: document.getElementById('col-grade').value,
+    service: document.getElementById('col-service').value,
+    cert: document.getElementById('col-cert').value,
+    variety: document.getElementById('col-variety').value,
+    notes: document.getElementById('col-notes').value,
+    cost: parseFloat(document.getElementById('col-cost').value)||0,
+    ask: parseFloat(document.getElementById('col-ask').value)||0,
+    date: document.getElementById('col-date').value,
+    obvPhoto: coinPhotos.obv || (editingCoinId ? (coins.find(c=>c.id===editingCoinId)||{}).obvPhoto : null),
+    revPhoto: coinPhotos.rev || (editingCoinId ? (coins.find(c=>c.id===editingCoinId)||{}).revPhoto : null),
+    slabPhoto: coinPhotos.slab || (editingCoinId ? (coins.find(c=>c.id===editingCoinId)||{}).slabPhoto : null),
+    aiValText: document.getElementById('ai-val-content').textContent,
+    aiValue: editingCoinId ? (coins.find(c=>c.id===editingCoinId)||{}).aiValue : 0,
+  };
+  if (editingCoinId) {
+    const idx = coins.findIndex(c => c.id === editingCoinId);
+    if (idx >= 0) { coin.aiValue = coins[idx].aiValue; coins[idx] = coin; }
+    else coins.unshift(coin);
+  } else {
+    coins.unshift(coin);
+  }
+  S.set('collection', coins);
+  closeCoinModal();
+  renderCollection();
+  toast('Saved ✓');
+}
+
+function deleteCoin() {
+  if (!editingCoinId || !confirm('Delete this coin?')) return;
+  S.set('collection', (S.get('collection')||[]).filter(c => c.id !== editingCoinId));
+  closeCoinModal();
+  renderCollection();
+  toast('Deleted');
+}
+
+async function getAIValuation() {
+  const key = (document.getElementById('api-key') ? document.getElementById('api-key').value.trim() : '') || S.get('apikey');
+  if (!key) { toast('Add API key in Scanner tab'); return; }
+  const name = document.getElementById('col-name').value || 'coin';
+  const year = document.getElementById('col-year').value;
+  const mint = document.getElementById('col-mint').value;
+  const grade = document.getElementById('col-grade').value;
+  const service = document.getElementById('col-service').value;
+  const variety = document.getElementById('col-variety').value;
+  const cert = document.getElementById('col-cert').value;
+  const valEl = document.getElementById('ai-val-content');
+  valEl.innerHTML = '<span class="spinner"></span>Getting valuation…';
+
+  const prompt = `You are a numismatic expert. Provide a current market valuation for:
+Coin: ${year}${mint?' '+mint:''} ${name}${grade?' Grade: '+grade:''}${service&&service!=='raw'?' ('+service+')':''}${variety?' Variety: '+variety:''}${cert?' Cert#: '+cert:''}
+
+Current spot: Au $${prices.au.toFixed(0)}/ozt · Ag $${prices.ag.toFixed(2)}/ozt
+
+Reply in this exact format:
+MELT VALUE: $X.XX
+RETAIL VALUE: $XX–$XX  
+WHOLESALE/BID: $XX
+KEY FACTORS: (2-3 sentences on what drives this coin's premium or discount)
+MARKET NOTE: (1 sentence on current trend for this series)`;
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,messages:[{role:'user',content:prompt}]})
+    });
+    const d = await r.json();
+    const txt = d.content?.[0]?.text || 'Could not get valuation.';
+    valEl.textContent = txt;
+    const match = txt.match(/RETAIL VALUE:\s*\$?([\d,]+)/);
+    if (match) {
+      const val = parseFloat(match[1].replace(',',''));
+      if (editingCoinId) {
+        const coins = S.get('collection')||[];
+        const c = coins.find(x=>x.id===editingCoinId);
+        if(c){c.aiValue=val;c.aiValText=txt;S.set('collection',coins);}
+      }
+    }
+  } catch(e) { valEl.textContent = 'Error: ' + e.message; }
+}
+
+async function lookupCert() {
+  const cert = document.getElementById('col-cert').value.trim();
+  const service = document.getElementById('col-service').value;
+  if (!cert) { toast('Enter cert number first'); return; }
+  const key = S.get('apikey');
+  if (!key) { toast('Add API key in Scanner tab'); return; }
+  const valEl = document.getElementById('ai-val-content');
+  valEl.innerHTML = '<span class="spinner"></span>Looking up cert…';
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,
+        tools:[{type:'web_search_20250305',name:'web_search'}],
+        messages:[{role:'user',content:`Look up ${service} cert number ${cert} and return the coin details: year, denomination, type, mint mark, grade, designation, and any special attributes. Be concise.`}]})
+    });
+    const d = await r.json();
+    const txt = (d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    valEl.textContent = txt || 'Could not find cert details.';
+  } catch(e) { valEl.textContent = 'Lookup error: ' + e.message; }
+}
+
+document.getElementById('coin-modal').addEventListener('click', function(e) {
+  if(e.target === this) closeCoinModal();
+});
+
+function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2200);}
+
+// ── SELF-HEAL: ensure every holding has a matching Registry/Collection entry ──
+function syncHoldingsToCollection(){
+  const holdings = S.get('holdings')||[];
+  const coins = S.get('collection')||[];
+  if(!holdings.length) return;
+
+  // Build a lookup of collection entries already linked to a holding
+  const linkedHoldingIds = new Set(coins.filter(c=>c.ownedHoldingId).map(c=>c.ownedHoldingId));
+  // Also catch name+date matches for older entries created before linking existed
+  const existingKey = new Set(coins.map(c => (c.name||'')+'|'+(c.date||'')));
+
+  let added = 0;
+  holdings.forEach(h=>{
+    if(linkedHoldingIds.has(h.id)) return; // already linked
+    const key = (h.name||'')+'|'+(h.date||'');
+    if(existingKey.has(key)) return; // likely already represented
+
+    // Backfill a Registry entry for this orphaned holding
+    coins.unshift({
+      id:String(h.id)+'_synced',
+      name:h.name, year:'', mint:'',
+      metal:h.metal, denom:'', grade:'',
+      service:'raw', cert:'', variety:'',
+      notes:h.notes||'',
+      cost:h.cost||0, ask:0,
+      date:h.date||new Date().toISOString().slice(0,10),
+      obvPhoto:null, revPhoto:null, slabPhoto:null,
+      aiValText:'', aiValue:0,
+      ownedHoldingId:h.id
+    });
+    added++;
+  });
+
+  if(added>0){
+    S.set('collection', coins);
+    console.log(`Synced ${added} orphaned holding(s) into Collection registry`);
+  }
+}
+
+// ── INIT ──
+document.getElementById('add-date').value=new Date().toISOString().slice(0,10);
+const savedKey=S.get('apikey');if(savedKey)document.getElementById('api-key').value=savedKey;
+syncHoldingsToCollection();
+renderPortfolio();
+renderFlips();
+renderCollection();
+renderSellPicker();
+</script>
+</body>
+</html>
